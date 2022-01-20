@@ -1,100 +1,72 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <title>Laravel</title>
-
-        <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;600&display=swap" rel="stylesheet">
-
-        <!-- Styles -->
-        <style>
-            html, body {
-                background-color: #fff;
-                color: #636b6f;
-                font-family: 'Nunito', sans-serif;
-                font-weight: 200;
-                height: 100vh;
-                margin: 0;
-            }
-
-            .full-height {
-                height: 100vh;
-            }
-
-            .flex-center {
-                align-items: center;
-                display: flex;
-                justify-content: center;
-            }
-
-            .position-ref {
-                position: relative;
-            }
-
-            .top-right {
-                position: absolute;
-                right: 10px;
-                top: 18px;
-            }
-
-            .content {
-                text-align: center;
-            }
-
-            .title {
-                font-size: 84px;
-            }
-
-            .links > a {
-                color: #636b6f;
-                padding: 0 25px;
-                font-size: 13px;
-                font-weight: 600;
-                letter-spacing: .1rem;
-                text-decoration: none;
-                text-transform: uppercase;
-            }
-
-            .m-b-md {
-                margin-bottom: 30px;
-            }
-        </style>
+        <meta name="csrf-token" content="{{ csrf_token() }}" />
+        <title>Home</title>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script>
+        	$.ajaxSetup({
+			    headers: {
+			        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+			    }
+			});
+        	function post(){
+                var urls = $('input[name="mytext[]"]').map(function(){ 
+                    return this.value; 
+                }).get();
+        		$.ajax({
+			        url: "crawler",
+			        type: "post",
+			        data: JSON.stringify({"urls": urls}),
+			        dataType: "json",
+			        contentType: "application/json; charset=UTF-8",
+			        success: function(data) {
+						$('#mycount').empty();
+			            console.log(data);
+						for(item of data){
+							var resslt = Object.values(item);
+							var h = 'http://localhost/crawler/'+resslt[3]
+							console.log(resslt);
+							$('#mycount').append(`<div>title : <a href="http://localhost/crawler/public/detail?url=${resslt[0]}">  ${resslt[1]}  </a><br> description : <a> ${resslt[2]} </a><br>created_at : <a> ${resslt[4]} </a><br> Screenshot : <img src= ${h} / ></div>`)
+						}
+			        },
+			        error: function(XMLHttpRequest, textStatus, errorThrown) {
+			            console.log(errorThrown);
+			        }
+			    });
+        	}
+        </script>
+		<script>
+			$(document).ready(function() {
+				var max_fields      = 10; //maximum input boxes allowed
+				var wrapper         = $(".input_fields_wrap"); //Fields wrapper
+				var add_button      = $(".add_field_button"); //Add button ID
+				 
+				var x = 1; //initlal text box count
+				$(add_button).click(function(e){ //on add input button click
+					e.preventDefault();
+					if(x < max_fields){ //max input box allowed
+						x++; //text box increment
+						$(wrapper).append('<div><input type="text" name="mytext[]"/><a href="#" class="remove_field">Remove</a></div>'); //add input box
+					}
+				});
+				 
+				$(wrapper).on("click",".remove_field", function(e){ //user click on remove text
+					e.preventDefault(); $(this).parent('div').remove(); x--;
+				})
+			});
+		</script>
     </head>
     <body>
-        <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
-
-            <div class="content">
-                <div class="title m-b-md">
-                    Laravel
-                </div>
-
-                <div class="links">
-                    <a href="https://laravel.com/docs">Docs</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://blog.laravel.com">Blog</a>
-                    <a href="https://nova.laravel.com">Nova</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://vapor.laravel.com">Vapor</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
-                </div>
-            </div>
-        </div>
+		<div class="input_fields_wrap">
+			<button class="add_field_button">Add More Urls</button>
+			<div><input type="text" name="mytext[]"></div>
+		</div>
+		
+        <input type="button" value="post" onclick="post();"/>
+		
+		<span id="mycount"></span> 
     </body>
 </html>
