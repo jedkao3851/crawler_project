@@ -37,16 +37,23 @@ class CrawlerController extends Controller
     public function store(Request $request)
     {
         $result = [];
-        $urls = $request->url;
-        foreach ($urls as $url) {
-            $html = file_get_contents($url);
-            $crawler = new Crawler($html);
-            $data['title'] = $crawler->filter('title')->text();
-            $data['description'] = $crawler->filterXpath("//meta[@name='description']")->extract(array('content'))[0];
-            $data['image'] = Browsershot::url($url)->base64Screenshot();
-            dd($data['image']);
-            $result[] = $data;
-        }
+		$urls = $request->urls;
+		$pathToImage = 'public/shotdir/shot'.date('Ymdhisu').'.jpg';
+		foreach ($urls as $url) {
+			if(empty($url)) continue;
+			$html = file_get_contents($url);
+			$crawler = new Crawler($html);
+			$data['url'] = $url;
+			$data['title'] = $crawler->filter('title')->text();
+			$description = $crawler->filterXpath("//meta[@name='description']")->extract(array('content'));
+			$data['description'] = isset($description[0]) ? $description[0] : '';
+			Browsershot::url($url)->save($pathToImage);
+			$data['image'] = $pathToImage;
+			$data['created_at'] = date('Y-m-d H:i:s');
+			$result[] = $data;
+		}
+
+		return $result;
 
     }
 
